@@ -23,6 +23,10 @@ markdown_instructions = """
         text-align: center;
         overflow-y: auto;
     }
+    .column-title{
+        font-size: 2rem;
+        text-align: center;
+    }
     .vote-button {
         background-color: #008CBA;
         color: white;
