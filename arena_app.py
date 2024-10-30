@@ -2,6 +2,7 @@ import streamlit as st
 import random
 import pandas as pd
 import os
+import time
 
 from helpers.markdown import markdown_instructions
 
@@ -10,6 +11,9 @@ DATA = "data/example_data.csv"
 RESULTS = "results/results.csv"
 INDEX_COL = "id"
 ADD_DRAW_BUTTON = True
+
+if "start_time" not in st.session_state:
+    st.session_state["start_time"] = time.perf_counter()
 
 # Load the sentences data
 sentences = pd.read_csv(DATA, index_col=INDEX_COL)
@@ -28,12 +32,21 @@ if "initialise" not in st.session_state:
     get_sample(sentences)
     
 # Function to save the result
-def save_result(winner):
+def save_result(winner, elapsed_time):
+
+    winner_side = "None"
+    if winner == "A":
+        winner_side = "Left"
+    elif winner == "B":
+        winner_side = "Right"
+
     # Create a dataframe for the current result
     result_df = pd.DataFrame([{
         'A_id': st.session_state['index1'],
         'B_id': st.session_state['index2'],
         'winner_id': winner,
+        'winner_side': winner_side,
+        'elapsed_time': elapsed_time
     }])
 
     # Check if the results file exists, if not create it
@@ -46,6 +59,11 @@ def save_result(winner):
     get_sample(sentences)
     st.rerun()
 
+def calculate_time(start,end):
+    end_time = time.perf_counter()
+    elapsed_time = end_time - st.session_state["start_time"]
+    st.session_state["start_time"] = end_time  # Reset timer for next vote
+    return f"{elapsed_time:.4f}"
 
 # Set up the page
 st.set_page_config(page_title="Voting Arena", page_icon="⚔️", layout="wide")
@@ -73,15 +91,18 @@ if ADD_DRAW_BUTTON:
     colA, col_Draw, colB = st.columns(3)
     with col_Draw:
         if st.button("Vote for a Draw", use_container_width=True, key='vote_draw', help="Click to vote for a draw"):
-            save_result('Draw')
+            time_elapsed = calculate_time(st.session_state["start_time"], time.perf_counter())
+            save_result('Draw', time_elapsed)
             st.markdown("<div class='vote-message'>You voted for Sentence A!</div>", unsafe_allow_html=True)
 
 with colA:
     if st.button("Vote for A", use_container_width=True, key='vote_a', help="Click to vote for Sentence A"):
-        save_result('A')
+        time_elapsed = calculate_time(st.session_state["start_time"], time.perf_counter())
+        save_result('A', time_elapsed)
         st.markdown("<div class='vote-message'>You voted for Sentence A!</div>", unsafe_allow_html=True)
 
 with colB:
     if st.button("Vote for B", use_container_width=True, key='vote_b', help="Click to vote for Sentence B"):
-        save_result('B')
+        time_elapsed = calculate_time(st.session_state["start_time"], time.perf_counter())
+        save_result('B', time_elapsed)
         st.markdown("<div class='vote-message'>You voted for Sentence B!</div>", unsafe_allow_html=True)
